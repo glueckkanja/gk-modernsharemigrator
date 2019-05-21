@@ -173,7 +173,7 @@
                             "value": "[variables('artifactsLocation')]"
                         },
                         {
-                            "name": "ServerBlobs",
+                            "name": "ServerBlobs:ContainerName",
                             "value": "[concat(variables('containerName'),variables('containerServerPath'))]"
                         },
                         {
