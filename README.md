@@ -10,19 +10,27 @@
 4. Click **New registration**
 5. Set supported account types to **Accounts in this organizational directory only**
 6. Set the redirect URI to the app service URL of **Modern Share Migrator** 
+![Screenshot](./docs/images/aadAppRegistration.png)
 7. Save the **Application (client) ID** somewhere because you will need it for the deployment
-> [!NOTE]
-> Redirect URI: https://[your app service name].azurewebsites.net/**signin-oidc**
+![Screenshot](./docs/images/aadAppOverview.png)
+
+```
+Redirect URI: https://[your app service name].azurewebsites.net/**signin-oidc**
+```
 
 #### Manage authentication
 1. Select the **Authentication** blade
+![Screenshot](./docs/images/authentication1.png)
 2. Check **ID tokens** in the **Advaned settings** section
+![Screenshot](./docs/images/authentication.png)
 3. Save your changes
 4. Ensure the redirect URI is valid!
 
 #### Create a client secret
 1. Select the **Certificates & secrets** blade
+![Screenshot](./docs/images/certsSecrets.png)
 2. Add a new client secret with **New client secret**
+![Screenshot](./docs/images/newSecret.png)
 3. Define a Description and set expiration to **Never**
 4. Save the generated secret somewhere because you are not able to look it up again
 
@@ -33,6 +41,7 @@
 4. Expand **Group** and check **Group.ReadWrite.All**
 5. Expand **User** and check **User.Read.All** and confirm with **Add permission**
 6. Click **Grant admin consent** and confirm the displayed dialog with **Yes**
+![Screenshot](./docs/images/api-permissions.png)
 
 ### Deploy to Azure
 
