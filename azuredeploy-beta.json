@@ -46,7 +46,7 @@
         }
     },
     "variables": {
-        "artifactsLocation": "https://github.com/glueckkanja/gk-modernsharemigrator/raw/master/dist/Artifacts.zip",
+        "artifactsLocation": "https://github.com/glueckkanja/gk-modernsharemigrator/raw/master/dist/Artifacts-beta.zip",
         "StorageAccountType": "Standard_LRS",
         "containerName": "servers",
         "containerServerPath": "/module-data/backup"

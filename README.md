@@ -9,13 +9,16 @@
 3. Choose **App registrations**
 4. Click **New registration**
 5. Set supported account types to **Accounts in this organizational directory only**
-6. Set the redirect URI to the app service URL of **Modern Share Migrator**: https://[your app service name].azurewebsites.net/signin-oidc
+6. Set the redirect URI to the app service URL of **Modern Share Migrator** 
 7. Save the **Application (client) ID** somewhere because you will need it for the deployment
+> [!NOTE]
+> Redirect URI: https://[your app service name].azurewebsites.net/**signin-oidc**
 
 #### Manage authentication
 1. Select the **Authentication** blade
 2. Check **ID tokens** in the **Advaned settings** section
 3. Save your changes
+4. Ensure the redirect URI is valid!
 
 #### Create a client secret
 1. Select the **Certificates & secrets** blade
@@ -27,14 +30,19 @@
 1. Select the **API permissions** blade
 2. Click **Add a permission** to grant required permissions
 3. Select **Microsoft Graph**
-4. Expand **Group** and check **Group.Read.All** and **Group.ReadWrite.All**
+4. Expand **Group** and check **Group.ReadWrite.All**
 5. Expand **User** and check **User.Read.All** and confirm with **Add permission**
 6. Click **Grant admin consent** and confirm the displayed dialog with **Yes**
 
 ### Deploy to Azure
 
 When the app registration is done use this button to deploy **Modern Share Migrator** to your Azure subscription.
-
+#### Prod
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fglueckkanja%2Fgk-modernsharemigrator%2Fmaster%2Fazuredeploy.json" target="_blank">
+    <img src="http://azuredeploy.net/deploybutton.png"/>
+</a>
+
+#### Beta
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fglueckkanja%2Fgk-modernsharemigrator%2Fmaster%2Fazuredeploy-beta.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
