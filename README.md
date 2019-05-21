@@ -14,9 +14,9 @@
 7. Save the **Application (client) ID** somewhere because you will need it for the deployment
 ![Screenshot](./docs/images/aadAppOverview.png)
 
-```
-Redirect URI: https://[your app service name].azurewebsites.net/**signin-oidc**
-```
+> Note: 
+> Redirect URI: https://[your app service name].azurewebsites.net/**signin-oidc**
+>
 
 #### Manage authentication
 1. Select the **Authentication** blade
