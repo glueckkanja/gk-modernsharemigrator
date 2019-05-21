@@ -1,0 +1,215 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "TenantDomain": {
+            "type": "string",
+            "metadata": {
+                "description": "Tenant Domain. (e.g.: contoso.onmicrosoft.com)"
+            }
+        },
+        "ClientId": {
+            "type": "string",
+            "metadata": {
+                "description": "GUID of Azure AD Application"
+            }
+        },
+        "ClientSecret": {
+            "type": "string",
+            "metadata": {
+                "description": "Secret of Azure AD Application"
+            }
+        },
+        "ModernShareMigratorGlobalAdmin": {
+            "type": "string",
+            "metadata": {
+                "description": "Global Admin for Modern Share Migrator"
+            }
+        },
+        "StorageAccountName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the storage account"
+            }
+        },
+        "CosmosDBAccountName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the CosmosDB"
+            }
+        },
+        "AppServicePlanName": {
+            "type": "string"
+        },
+        "AppServiceName": {
+            "type": "string"
+        }
+    },
+    "variables": {
+        "artifactsLocation": "https://github.com/glueckkanja/gk-modernsharemigrator/raw/master/dist/Artifacts.zip",
+        "StorageAccountType": "Standard_LRS",
+        "containerName": "servers"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2019-04-01",
+            "name": "[parameters('StorageAccountName')]",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "[variables('StorageAccountType')]"
+            },
+            "kind": "StorageV2",
+            "properties": {
+                "accountType": "[variables('StorageAccountType')]",
+                "networkAcls": {
+                    "bypass": "AzureServices",
+                    "defaultAction": "Allow"
+                },
+                "supportsHttpsTrafficOnly": true,
+                "encryption": {
+                    "services": {
+                        "file": {
+                            "enabled": true
+                        },
+                        "blob": {
+                            "enabled": true
+                        }
+                    },
+                    "keySource": "Microsoft.Storage"
+                },
+                "accessTier": "Hot"
+            },
+            "resources": [
+                {
+                    "name": "[concat('default/', variables('containerName'))]",
+                    "type": "blobServices/containers",
+                    "apiVersion": "2019-04-01",
+                    "dependsOn": [
+                        "[parameters('storageAccountName')]"
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "Microsoft.DocumentDB/databaseAccounts",
+            "apiVersion": "2015-04-08",
+            "name": "[parameters('CosmosDBAccountName')]",
+            "location": "[resourceGroup().location]",
+            "tags": {
+                "defaultExperience": "Core (SQL)"
+            },
+            "kind": "GlobalDocumentDB",
+            "properties": {
+                "enableAutomaticFailover": false,
+                "enableMultipleWriteLocations": false,
+                "isVirtualNetworkFilterEnabled": false,
+                "virtualNetworkRules": [],
+                "databaseAccountOfferType": "Standard",
+                "consistencyPolicy": {
+                    "defaultConsistencyLevel": "Session",
+                    "maxIntervalInSeconds": 5,
+                    "maxStalenessPrefix": 100
+                },
+                "locations": [
+                    {
+                        "locationName": "[resourceGroup().location]",
+                        "provisioningState": "Succeeded",
+                        "failoverPriority": 0
+                    }
+                ],
+                "capabilities": []
+            }
+        },
+        {
+            "type": "Microsoft.Web/serverfarms",
+            "apiVersion": "2018-02-01",
+            "name": "[parameters('AppServicePlanName')]",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "Tier": "Basic",
+                "Name": "B1"
+            },
+            "properties": {
+                "name": "[parameters('AppServicePlanName')]",
+                "workerSize": 1,
+                "numberOfWorkers": 1
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "2018-02-01",
+            "name": "[parameters('AppServiceName')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.Web/serverfarms/', parameters('AppServicePlanName'))]",
+                "[concat('Microsoft.Storage/storageAccounts/', parameters('StorageAccountName'))]",
+                "[concat('Microsoft.DocumentDB/databaseAccounts/', parameters('CosmosDBAccountName'))]"
+            ],
+            "tags": {
+                "[concat('hidden-related:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', parameters('AppServicePlanName'))]": "Resource",
+                "displayName": "Modern Share Migrator"
+            },
+            "properties": {
+                "name": "[parameters('AppServiceName')]",
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms/', parameters('AppServicePlanName'))]",
+                "resources": [
+                    {
+                        "apiVersion": "2018-02-01",
+                        "name": "Microsoft.AspNetCore.AzureAppServices.SiteExtension",
+                        "type": "siteextensions",
+                        "dependsOn": [
+                            "[resourceId('Microsoft.Web/Sites', parameters('appServiceName'))]"
+                        ],
+                        "properties": {}
+                    }
+                ],
+                "siteConfig": {
+                    "alwaysOn": true,
+                    "appSettings": [
+                        {
+                            "name": "WEBSITE_RUN_FROM_PACKAGE",
+                            "value": "[variables('artifactsLocation')]"
+                        },
+                        {
+                            "name": "AzureAd:Domain",
+                            "value": "[parameters('TenantDomain')]"
+                        },
+                        {
+                            "name": "AzureAd:TenantId",
+                            "value": "[subscription().tenantId]"
+                        },
+                        {
+                            "name": "AzureAd:ClientId",
+                            "value": "[parameters('ClientId')]"
+                        },
+                        {
+                            "name": "AzureAd:ClientSecret",
+                            "value": "[parameters('ClientSecret')]"
+                        },
+                        {
+                            "name": "ConnectionStrings:ServerBlobStorage",
+                            "value": "[Concat('DefaultEndpointsProtocol=https;AccountName=',parameters('StorageAccountName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('StorageAccountName')), '2019-04-01').keys[0].value)]"
+                        },
+                        {
+                            "name": "ConnectionStrings:QueueStorage",
+                            "value": "[Concat('DefaultEndpointsProtocol=https;AccountName=',parameters('StorageAccountName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('StorageAccountName')), '2019-04-01').keys[0].value)]"
+                        },
+                        {
+                            "name": "DocumentDB:Endpoint",
+                            "value": "[reference(concat('Microsoft.DocumentDb/databaseAccounts/', parameters('CosmosDBAccountName'))).documentEndpoint]"
+                        },
+                        {
+                            "name": "DocumentDB:Key",
+                            "value": "[listKeys(resourceId('Microsoft.DocumentDb/databaseAccounts', parameters('CosmosDBAccountName')), '2015-04-08').primaryMasterKey]"
+                        },
+                        {
+                            "name": "GlobalAdmins:0",
+                            "value": "[parameters('ModernShareMigratorGlobalAdmin')]"
+                        }
+                    ]
+                }
+            }
+        }
+    ]
+}
