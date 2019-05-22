@@ -1,7 +1,7 @@
 # Modern Share Migrator
 
 ## Deployment
-### Register an application in Azure Active Directory
+### Register Modern Share Migrator in Azure Active Directory
 
 #### Add a new app registration in Azure Active Directory
 1. Login to your [Azure Portal](http://portal.azure.com/) with an Admin Account.
@@ -42,6 +42,19 @@
 5. Expand **User** and check **User.Read.All** and confirm with **Add permission**
 6. Click **Grant admin consent** and confirm the displayed dialog with **Yes**
 ![Screenshot](./docs/images/api-permissions.png)
+
+### SharePoint Online Add-in permissions
+Use this URL to register SharePoint Add-ins:
+[https://[your tenant]-admin.sharepoint.com/_layouts/15/appinv.aspx](https://YOURTENANT-admin.sharepoint.com/_layouts/15/appinv.aspx)
+
+Paste the **Application (client) ID** in the **App Id** field and click **Lookup**. Check if **Title** and **Redirect URL** are correct. Set the **App Domain**. Paste the following XML in the **App's Permission Request XML**:
+
+```
+<AppPermissionRequests AllowAppOnlyPolicy="true">
+    <AppPermissionRequest Scope="http://sharepoint/content/tenant" Right="FullControl" /> 
+</AppPermissionRequests>
+```
+![Screenshot](./docs/images/spoPermission.png)
 
 ### Deploy to Azure
 
