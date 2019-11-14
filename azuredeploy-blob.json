@@ -26,22 +26,10 @@
                 "description": "Global Admin for Modern Share Migrator"
             }
         },
-        "RmConnectionString": {
+        "StorageAccountName": {
             "type": "string",
             "metadata": {
-                "description": "Connection String to RealMigrator Blob Storage"
-            }
-        },
-        "RmContainerName": {
-            "type": "string",
-            "metadata": {
-                "description": "Name of the RealMigrator Container"
-            }
-        },
-        "RmServerDirectory": {
-            "type": "string",
-            "metadata": {
-                "description": "Path of directory where servers are migrating data"
+                "description": "Name of the storage account"
             }
         },
         "CosmosDBAccountName": {
@@ -58,9 +46,52 @@
         }
     },
     "variables": {
-        "artifactsLocation": "https://github.com/glueckkanja/gk-modernsharemigrator/raw/master/dist/Artifacts.zip"
+        "artifactsLocation": "https://github.com/glueckkanja/gk-modernsharemigrator/raw/master/dist/Artifacts.zip",
+        "StorageAccountType": "Standard_LRS",
+        "containerName": "servers",
+        "containerServerPath": "/module-data/backup"
     },
     "resources": [
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2019-04-01",
+            "name": "[parameters('StorageAccountName')]",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "[variables('StorageAccountType')]"
+            },
+            "kind": "StorageV2",
+            "properties": {
+                "accountType": "[variables('StorageAccountType')]",
+                "networkAcls": {
+                    "bypass": "AzureServices",
+                    "defaultAction": "Allow"
+                },
+                "supportsHttpsTrafficOnly": true,
+                "encryption": {
+                    "services": {
+                        "file": {
+                            "enabled": true
+                        },
+                        "blob": {
+                            "enabled": true
+                        }
+                    },
+                    "keySource": "Microsoft.Storage"
+                },
+                "accessTier": "Hot"
+            },
+            "resources": [
+                {
+                    "name": "[concat('default/', variables('containerName'))]",
+                    "type": "blobServices/containers",
+                    "apiVersion": "2019-04-01",
+                    "dependsOn": [
+                        "[parameters('storageAccountName')]"
+                    ]
+                }
+            ]
+        },
         {
             "type": "Microsoft.DocumentDB/databaseAccounts",
             "apiVersion": "2015-04-08",
@@ -113,6 +144,7 @@
             "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[concat('Microsoft.Web/serverfarms/', parameters('AppServicePlanName'))]",
+                "[concat('Microsoft.Storage/storageAccounts/', parameters('StorageAccountName'))]",
                 "[concat('Microsoft.DocumentDB/databaseAccounts/', parameters('CosmosDBAccountName'))]"
             ],
             "tags": {
@@ -142,7 +174,7 @@
                         },
                         {
                             "name": "ServerBlobs:ContainerName",
-                            "value": "[concat(parameters('RmContainerName'),parameters('RmServerDirectory'))]"
+                            "value": "[concat(variables('containerName'),variables('containerServerPath'))]"
                         },
                         {
                             "name": "AzureAd:Domain",
@@ -162,11 +194,11 @@
                         },
                         {
                             "name": "ConnectionStrings:ServerBlobStorage",
-                            "value": "[parameters('RmConnectionString')]"
+                            "value": "[Concat('DefaultEndpointsProtocol=https;AccountName=',parameters('StorageAccountName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('StorageAccountName')), '2019-04-01').keys[0].value)]"
                         },
                         {
                             "name": "ConnectionStrings:QueueStorage",
-                            "value": "[parameters('RmConnectionString')]"
+                            "value": "[Concat('DefaultEndpointsProtocol=https;AccountName=',parameters('StorageAccountName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('StorageAccountName')), '2019-04-01').keys[0].value)]"
                         },
                         {
                             "name": "DocumentDB:Endpoint",
